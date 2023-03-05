@@ -41,6 +41,9 @@ class PygameHandler(metaclass=Singleton):
     SIZE = (WIDTH, HEIGHT)
     FILL_COLOR = (0, 0, 0)
     CAPTION = "aaa tank game"
+    
+    # singleton new
+    
 
     def __init__(self, in_headless_mode: bool=False):
         self.in_headless_mode = in_headless_mode
@@ -68,18 +71,21 @@ class PygameHandler(metaclass=Singleton):
 
     def run(self):
         while True:
-            keys_pressed = pygame.key.get_pressed()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    return
-            for element in self.elements:
-                if not self.in_headless_mode:
-                    element.draw(self.display)
-                element.update(keys_pressed)
+            self.loop()
+            
+    def loop(self):
+        keys_pressed = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+        for element in self.elements:
             if not self.in_headless_mode:
-                self.display_update()
-            self.clock.tick(60)
+                element.draw(self.display)
+            element.update(keys_pressed)
+        if not self.in_headless_mode:
+            self.display_update()
+        self.clock.tick(60)
 
 
 # abstract base class for game elements
@@ -304,8 +310,12 @@ class Tank(GameElement):
     def get_all_raytrace_outputs(self):
         to_return = []
         for collision in [self.trace_angle(angle) for angle in self.TRACED_ANGLES]:
-            to_return.append(collision[1] / self.RAYTRACE_LEN, collision[2].RAYTRACE_TYPE)
+            if collision[2] is None:
+                to_return.extend([collision[1] / self.RAYTRACE_LEN, 3])
+                continue
+            to_return.extend([collision[1] / self.RAYTRACE_LEN, collision[2].RAYTRACE_TYPE])
         return to_return
+    
     # -------- other controls --------
 
     def handle_space(self, space_is_pressed: bool):
@@ -329,8 +339,10 @@ class NeuralNetControlledTank(Tank):
     
     def update(self, _keys):
         output = self.neural_net.get_prediction([
+            self.angle / 360,
             self.x / PygameHandler.WIDTH,
             self.y / PygameHandler.HEIGHT,
+            *self.get_all_raytrace_outputs(),
         ])
         assert len(output) == 5
         # net outputs floats, we need bool

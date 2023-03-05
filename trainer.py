@@ -55,15 +55,18 @@ class Trainer:
     def get_winner(self, batch: List[NeuralNet]) -> NeuralNet:
         # this function is weird
         # get the scores of all the models fighting all the other models. Could maybe do less fighting?
+        # TODO: store fighting for both
         scores = []
         for index, neural_net in enumerate(batch):
-            scores[index] = 0
+            scores.append(0)
+            # for other_index, other_neural_net in enumerate(batch[index+1:]):
             for other_neural_net in batch:
                 if neural_net is other_neural_net:
                     continue
                 if self.fight_function(neural_net, other_neural_net):
                     scores[index] += 1
         # return the best one
+        # print(max(scores), neural_net)
         best_score = max(scores)
         if scores.count(best_score) > 1:
             # resolve ties
@@ -78,6 +81,10 @@ class Trainer:
     
     def train(self):
         batch = self.generate_batch( self.neural_net, self.BATCH_SIZE )
-        self.neural_net = self.get_winner(batch)
+        winner = self.get_winner(batch)
+        # if winner != self.neural_net:
+        #     print("WINNER CHANGED")
+        #     assert self.fight_function(winner, self.neural_net)
+        self.neural_net = winner
         
         

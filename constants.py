@@ -1,0 +1,1 @@
+FILE_FORMAT = "resources/nets/net_alt{}.netsave"

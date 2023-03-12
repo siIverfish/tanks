@@ -2,6 +2,7 @@
 
 import pygame
 import math
+import random
 
 from abc import ABC, abstractmethod
 from net import (
@@ -91,7 +92,7 @@ class PygameHandler(metaclass=Singleton):
             element.update(keys_pressed)
         if not self.in_headless_mode:
             self.display_update()
-            # clock.tick(60) # removed to go speedier
+            # self.clock.tick(60) # removed to go speedier
 
 
 # abstract base class for game elements
@@ -107,12 +108,12 @@ class GameElement(ABC):
     def apply_boundary(self):
         if self.x < 0:
             self.x = 0
-        if self.x > PygameHandler.WIDTH:
-            self.x = PygameHandler.WIDTH
+        if self.x > PygameHandler.WIDTH - self.RAW_BOUNDING_SQUARE.width:
+            self.x = PygameHandler.WIDTH - self.RAW_BOUNDING_SQUARE.width
         if self.y < 0:
             self.y = 0
-        if self.y > PygameHandler.HEIGHT:
-            self.y = PygameHandler.HEIGHT
+        if self.y > PygameHandler.HEIGHT - self.RAW_BOUNDING_SQUARE.height:
+            self.y = PygameHandler.HEIGHT - self.RAW_BOUNDING_SQUARE.height
 
 
 class KeyParser: # unused
@@ -140,27 +141,21 @@ class Tank(GameElement):
     MAX_AMMO = 10
     START_HP = 5
     
+    RANDOM_START_LOCATION = True
+    
     RAYTRACE_LEN = 1000
-    RAYTRACE_TYPE = 1
-    
-    # RAYTRACE_SPACING = 20
-    # RAYTRACE_AMOUNT = 10
-    
-    #  old
-    # TRACED_ANGLES = [
-    #     -120, -90, -60, -45, -30, -15, -10, -5, -3, 0, 3, 5, 10, 15, 30, 45, 60, 90, 120
-    # ]
-    
+    RAYTRACE_TYPE = 10
     TRACED_ANGLES = [
         -160, -140, -120, -100, -80, -60, -40, -20, -10, 0, 10, 20, 40, 60, 80, 100, 120, 140, 160
     ]
-    
-    # @property
-    # def center_location(self):
-    #     return (self.x + self.RAW_BOUNDING_SQUARE.width / 2, self.y + self.RAW_BOUNDING_SQUARE.height / 2)
 
     def __init__(self, location, angle, color, key_parser):
-        self.location = location
+        if self.RANDOM_START_LOCATION:
+            self.x = random.randint(0, PygameHandler.WIDTH - self.RAW_BOUNDING_SQUARE.width)
+            self.y = random.randint(0, PygameHandler.HEIGHT - self.RAW_BOUNDING_SQUARE.height)
+        else:
+            self.location = location
+            
         self.angle = angle
         self.raw_image = pygame.image.load(imagepath(f"{color}_tank.png"))
         self.raw_image_rect = self.raw_image.get_rect()
@@ -207,6 +202,7 @@ class Tank(GameElement):
 
     def draw(self, display):
         display.blit(self.image, self.rect_for_image)
+        # self.draw_traced_angles(display)
     def update(self, keys):
         self.inner_update(self.key_parser.parse(keys))
     def inner_update(self, keys):
@@ -323,7 +319,13 @@ class Tank(GameElement):
                 continue
             to_return.extend([collision[1] / self.RAYTRACE_LEN, collision[2].RAYTRACE_TYPE*10])
         return to_return
-
+    def is_touching_other_tank(self):
+        for element in PygameHandler().elements:
+            if element is self:
+                continue
+            if isinstance(element, Tank) and self.rect.colliderect(element.rect):
+                return 1
+        return 0
 
 class NeuralNetControlledTank(Tank):
     def __init__(self, *args, neural_net: NeuralNet, **kwargs):
@@ -331,11 +333,16 @@ class NeuralNetControlledTank(Tank):
         self.neural_net = neural_net
     
     def update(self, _keys):
+        raytrace_outs = self.get_all_raytrace_outputs()
+        assert len(raytrace_outs) == 38, "raytrace output error"
         output = self.neural_net.get_prediction([
-            20,
-            self.x / PygameHandler.WIDTH,
-            self.y / PygameHandler.HEIGHT,
-            *self.get_all_raytrace_outputs(),
+            100, # bias
+            self.is_touching_other_tank() * 100,
+            self.x / PygameHandler.WIDTH  * 100,
+            self.y / PygameHandler.HEIGHT * 100,
+            0,
+            0,
+            *raytrace_outs,
         ])
         assert len(output) == 5
         # net outputs floats, we need bool

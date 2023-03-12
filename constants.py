@@ -1,1 +1,1 @@
-FILE_FORMAT = "resources/nets/net_alt{}.netsave"
+FILE_FORMAT = "resources/nets/net_r3_{}.netsave"

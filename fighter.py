@@ -13,6 +13,9 @@ import time
 class Fighter:
     MAX_FRAMES = 600
     
+    def __init__(self):
+        pass
+    
     def cleanup(self):
         PygameHandler().elements = []
     

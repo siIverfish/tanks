@@ -16,19 +16,19 @@ def load_latest_net() -> NeuralNet:
     print(f"LOADING NET {i}")
     return NeuralNet.load(FILE_FORMAT.format(i - 1))
 
-fighter = Fighter()
-neural_net = NeuralNet(
-    num_inputs=41,
-    num_layers=3,
-    num_nodes_per_layer=40,
-    num_outputs=5
-)
-neural_net.save()
-trainer = Trainer(neural_net, fighter.fight_function)
+def new_net() -> NeuralNet:
+    neural_net = NeuralNet(
+        num_inputs=44,
+        num_layers=4,
+        num_nodes_per_layer=50,
+        num_outputs=5
+    )
+    neural_net.save()
+    return neural_net
+    
 
-count = 0
+fighter = Fighter()
+trainer = Trainer(load_latest_net(), fighter.fight_function)
+
 while True:
     trainer.train()
-    count += 1
-    if count % 10 == 0:
-        trainer.neural_net.save()

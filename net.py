@@ -13,6 +13,9 @@ from constants import *
 # todo input & output classes?
 
 
+ENTROPY = 0.2
+
+
 def restrict_between(min_: float, x: float, max_: float):
     return min(max_, max(min_, x))
 
@@ -25,7 +28,7 @@ class Node:
         outputs (Optional[Layer[Node]]): The nodes that the nodes in this layer will output to -- the next layer in the network
     """
 
-    PERCENT_WEIGHTS_CHANGED = 0.4
+    PERCENT_WEIGHTS_CHANGED = ENTROPY
     WEIGHT_CHANGE_AMOUNT = 0.4
     MAX_WEIGHT = 3
     LETTER_PRINT_CODE = "N"
@@ -163,7 +166,7 @@ class Layer(list):
         outputs (Optional[Layer[Node]]): The next nodes that this layer will output to.
     """
 
-    PERCENT_NODES_CHANGED = 0.5
+    PERCENT_NODES_CHANGED = ENTROPY
 
     def __init__(
         self, num_nodes: int, outputs: Optional[List[Node]], is_input_layer=False
@@ -238,7 +241,7 @@ class NeuralNet:
         num_outputs (int): The number of outputs from the neural net.
     """
 
-    PERCENT_LAYERS_CHANGED = 0.6
+    PERCENT_LAYERS_CHANGED = ENTROPY
 
     def __init__(
         self,

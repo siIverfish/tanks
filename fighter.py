@@ -15,6 +15,7 @@ class Fighter:
     
     def __init__(self):
         pass
+        # PygameHandler(in_headless_mode=True)
     
     def cleanup(self):
         PygameHandler().elements = []
@@ -50,6 +51,8 @@ class Fighter:
                     elif status == "blue":
                         return blue_tank
             except pygame_error_probably_exit:
+                print(f"Pygame error, probably an exit")
+                raise pygame_error_probably_exit
                 exit(0)
             frame_count += 1
             if frame_count % 100 == 0:

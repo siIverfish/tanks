@@ -48,8 +48,9 @@ class PygameHandler(metaclass=Singleton):
 
     def __init__(self, in_headless_mode: bool=False):
         self.in_headless_mode = in_headless_mode
-        self.display = pygame.display.set_mode(self.SIZE)
-        pygame.display.set_caption(self.CAPTION)
+        if not self.in_headless_mode:
+            self.display = pygame.display.set_mode(self.SIZE)
+            pygame.display.set_caption(self.CAPTION)
         self.clock = pygame.time.Clock()
         self.elements = []
 
